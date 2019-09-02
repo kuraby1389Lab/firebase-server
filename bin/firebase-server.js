@@ -93,6 +93,7 @@ cli.main(function (args, options) { // eslint-disable-line max-statements,comple
 	}
 
 	if (options.secret) {
+		console.log('options.secret??',options.secret)
 		server.setAuthSecret(options.secret);
 	}
 

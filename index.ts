@@ -7,12 +7,12 @@
 import * as debug from 'debug';
 import * as firebase from 'firebase';
 import * as _ from 'lodash';
-import { AddressInfo } from 'net';
+import {AddressInfo} from 'net';
 import * as WebSocket from 'ws';
-import { Server as WebSocketServer } from 'ws';
-import { getFirebaseHash } from './lib/firebase-hash';
-import { HttpServer } from './lib/http-server';
-import { normalize, TokenValidator } from './lib/token-validator';
+import {Server as WebSocketServer} from 'ws';
+import {getFirebaseHash} from './lib/firebase-hash';
+import {HttpServer} from './lib/http-server';
+import {normalize, TokenValidator} from './lib/token-validator';
 
 // tslint:disable:no-var-requires
 const targaryen = require('targaryen');
@@ -67,7 +67,7 @@ class FirebaseServer {
 	private targaryen;
 	private https;
 	private wss: WebSocketServer;
-	private clock: number | null = null;
+	private clock: number | null = Number((new Date().getTime() / 1000).toFixed(0));
 	private tokenValidator;
 	private maxFrameLength;
 
@@ -121,18 +121,18 @@ class FirebaseServer {
 			}
 		} else {
 			port = portOrOptions;
-			options = { port };
+			options = {port};
 		}
 
 		if (options.server && options.rest) {
 			throw new Error('Incompatible options: server, rest');
 		} else if (options.rest) {
 			this.https = HttpServer(port, options.address, this.app.database());
-			options = { server: this.https };
+			options = {server: this.https};
 		}
 
 		if (options.address) {
-			options = Object.assign({}, options, { host: options.address });
+			options = Object.assign({}, options, {host: options.address});
 		}
 
 		if (options.maxFrameLength) {
@@ -151,10 +151,10 @@ class FirebaseServer {
 		log(`Listening for connections on port ${port}`);
 	}
 
-	protected handleConnection(ws: WebSocket & {_socket: any, frameBuffer?: string}) {
+	protected handleConnection(ws: WebSocket & { _socket: any, frameBuffer?: string }) {
 		log(`New connection from ${ws._socket.remoteAddress}:${ws._socket.remotePort}`);
 		const server = this;
-		let authToken: string|null = null;
+		let authToken: string | null = null;
 
 		function send(message: object) {
 			const payload = JSON.stringify(message);
@@ -171,7 +171,7 @@ class FirebaseServer {
 		}
 
 		function authData() {
-			let data;
+			/*let data;
 			if (authToken) {
 				try {
 					const decodedToken = server.tokenValidator.decode(authToken);
@@ -190,18 +190,21 @@ class FirebaseServer {
 					authToken = null;
 				}
 			}
-			return data;
+			return data;*/
+			console.log('server clock', server.clock);
+			console.log(authToken, server.authSecret);
+			return {provider: 'anonymous', uid: server.authSecret};
 		}
 
-		function pushData(path: string, data: object|null|string) {
-			send({ d: { a: 'd', b: { p: path, d: data } }, t: 'd' });
+		function pushData(path: string, data: object | null | string) {
+			send({d: {a: 'd', b: {p: path, d: data}}, t: 'd'});
 		}
 
 		function permissionDenied(requestId: number) {
-			send({ d: { r: requestId, b: { s: 'permission_denied', d: 'Permission denied' } }, t: 'd' });
+			send({d: {r: requestId, b: {s: 'permission_denied', d: 'Permission denied'}}, t: 'd'});
 		}
 
-		function replaceServerTimestamp(value: number, data: object|number|string) {
+		function replaceServerTimestamp(value: number, data: object | number | string) {
 			if (_.isEqual(data, firebase.database.ServerValue.TIMESTAMP)) {
 				return value;
 			} else if (_.isObject(data) && typeof data === 'object') {
@@ -212,14 +215,15 @@ class FirebaseServer {
 		}
 
 		function tryRead(requestId: number, path: string) {
-			const result = server.targaryen.as(authData()).read(path);
+			const result = server.targaryen.as(authData()).read(path, server.clock);
+			console.log('----------------');
 			if (!result.allowed) {
 				permissionDenied(requestId);
 				throw new Error(`Permission denied for client to read from ${path}: ${result.info}`);
 			}
 		}
 
-		function tryPatch(requestId: number, path: string, newData: object|string|number, now: number) {
+		function tryPatch(requestId: number, path: string, newData: object | string | number, now: number) {
 			const result = server.targaryen.as(authData()).update(path, newData, now);
 			if (!result.allowed) {
 				permissionDenied(requestId);
@@ -228,7 +232,7 @@ class FirebaseServer {
 			server.targaryen = result.newDatabase;
 		}
 
-		function tryWrite(requestId: number, path: string, newData: object|string|number, now: number) {
+		function tryWrite(requestId: number, path: string, newData: object | string | number, now: number) {
 			const result = server.targaryen.as(authData()).write(path, newData, now);
 			if (!result.allowed) {
 				permissionDenied(requestId);
@@ -256,7 +260,7 @@ class FirebaseServer {
 					pushData(path, snap.exportVal());
 					if (sendOk) {
 						sendOk = false;
-						send({ d: { r: requestId, b: { s: 'ok', d: {} } }, t: 'd' });
+						send({d: {r: requestId, b: {s: 'ok', d: {}}}, t: 'd'});
 					}
 				}
 			});
@@ -266,7 +270,7 @@ class FirebaseServer {
 			requestId: number,
 			normalizedPath: INormalizedPath,
 			fbRef: firebase.database.Reference,
-			newData: object|string|number,
+			newData: object | string | number,
 		) {
 			const path = normalizedPath.path;
 			log(`Client update ${path}`);
@@ -282,14 +286,14 @@ class FirebaseServer {
 			}
 
 			fbRef.update(newData);
-			send({ d: { r: requestId, b: { s: 'ok', d: {} } }, t: 'd' });
+			send({d: {r: requestId, b: {s: 'ok', d: {}}}, t: 'd'});
 		}
 
 		function handleSet(
 			requestId: number,
 			normalizedPath: INormalizedPath,
 			fbRef: firebase.database.Reference,
-			newData: object|string|number,
+			newData: object | string | number,
 			hash?: string,
 		) {
 			log(`Client set ${normalizedPath.fullPath}`);
@@ -323,7 +327,7 @@ class FirebaseServer {
 					const calculatedHash = getFirebaseHash(snap.exportVal());
 					if (hash !== calculatedHash) {
 						pushData(path, snap.exportVal());
-						send({ d: { r: requestId, b: { s: 'datastale', d: 'Transaction hash does not match' } }, t: 'd' });
+						send({d: {r: requestId, b: {s: 'datastale', d: 'Transaction hash does not match'}}, t: 'd'});
 						throw new Error(`Transaction hash does not match: ${hash} !== ${calculatedHash}`);
 					}
 				});
@@ -332,7 +336,7 @@ class FirebaseServer {
 			progress.then(() => {
 				fbRef.set(newData);
 				fbRef.once('value', (snap) => {
-					send({ d: { r: requestId, b: { s: 'ok', d: {} } }, t: 'd' });
+					send({d: {r: requestId, b: {s: 'ok', d: {}}}, t: 'd'});
 				});
 			}).catch(log);
 		}
@@ -342,7 +346,7 @@ class FirebaseServer {
 				return send({
 					d: {
 						b: {
-							d: normalize({ auth: null, admin: true, exp: null }),
+							d: normalize({auth: null, admin: true, exp: null}),
 							s: 'ok',
 						},
 						r: requestId,
@@ -354,9 +358,9 @@ class FirebaseServer {
 			try {
 				const decoded = server.tokenValidator.decode(credential);
 				authToken = credential;
-				return send({ t: 'd', d: { r: requestId, b: { s: 'ok', d: normalize(decoded) } } });
+				return send({t: 'd', d: {r: requestId, b: {s: 'ok', d: normalize(decoded)}}});
 			} catch (e) {
-				return send({ t: 'd', d: { r: requestId, b: { s: 'invalid_token', d: 'Could not parse auth token.' } } });
+				return send({t: 'd', d: {r: requestId, b: {s: 'invalid_token', d: 'Could not parse auth token.'}}});
 			}
 		}
 
@@ -408,11 +412,11 @@ class FirebaseServer {
 			}
 		});
 
-		send({ d: { t: 'h', d: { ts: new Date().getTime(), v: '5', h: this.name, s: '' } }, t: 'c' });
+		send({d: {t: 'h', d: {ts: new Date().getTime(), v: '5', h: this.name, s: ''}}, t: 'c'});
 	}
 
 	public setRules(rules: object) {
-		this.targaryen = this.targaryen.with({ rules });
+		this.targaryen = this.targaryen.with({rules});
 	}
 
 	public getData(ref?: firebase.database.Reference) {

@@ -9,6 +9,63 @@ Copyright (C) 2013, 2014, 2015, 2016, 2017, 2018, 2019, Uri Shaked and contribut
 [![Coverage Status](https://coveralls.io/repos/urish/firebase-server/badge.png)](https://coveralls.io/r/urish/firebase-server)
 [![npm version](https://badge.fury.io/js/firebase-server.png)](https://badge.fury.io/js/firebase-server)
 
+Changes
+------------
+* indicates breaking change
+
+- `firebase@5.0.0` to `firebase@6.5.0` latest version
+- `targaryen@3.0.1` to `targaryen@3.1.0` *
+-  default timestamp value to `private clock: number | null = Number((new Date().getTime() / 1000).toFixed(0));` *
+- added additional param called `server.clock` for database rule *
+```$xslt
+function tryRead(requestId: number, path: string) {
+			const result = server.targaryen.as(authData()).read(path, server.clock); //<<<<
+			console.log('----------------');
+			if (!result.allowed) {
+				permissionDenied(requestId);
+				throw new Error(`Permission denied for client to read from ${path}: ${result.info}`);
+			}
+		}
+```  
+
+- `authData()` in **index.ts** *
+```$xslt
+function authData() {
+			/*let data;
+			if (authToken) {
+				try {
+					const decodedToken = server.tokenValidator.decode(authToken);
+					if ('d' in decodedToken) {
+						data = decodedToken.d;
+					} else {
+						data = {
+							// 'user_id' is firebase-specific and may be
+							// convenience only; 'sub' is standard JWT.
+							provider: decodedToken.provider_id,
+							token: decodedToken,
+							uid: decodedToken.user_id || decodedToken.sub,
+						};
+					}
+				} catch (e) {
+					authToken = null;
+				}
+			}
+			return data;*/
+			console.log('server clock', server.clock);
+			console.log(authToken, server.authSecret);
+			return {provider: 'anonymous', uid: server.authSecret};
+		}
+```
+
+- new command for our database rule: 
+
+added `-s <<current_signed_in_user_id>>`
+
+locally  `cross-env ./node_modules/.bin/firebase-server -p 5555 -f ./data.json -r ./rules.json -e -s AQtp2iK4OTMOBKh4BhfIhClCOK12`
+
+globally `firebase-server -p 5555 -f ./data.json -r ./rules.json -e -s AQtp2iK4OTMOBKh4BhfIhClCOK12`
+
+
 Installation
 ------------
 
