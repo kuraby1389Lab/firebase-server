@@ -200,7 +200,9 @@ class FirebaseServer {
             }
         }
         function tryPatch(requestId, path, newData, now) {
+            console.log(newData, now);
             const result = server.targaryen.as(authData()).update(path, newData, now);
+            console.log('result', result);
             if (!result.allowed) {
                 permissionDenied(requestId);
                 throw new Error(`Permission denied for client to update at ${path}: ${result.info}`);
