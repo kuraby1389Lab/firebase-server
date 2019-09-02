@@ -82,14 +82,14 @@ Usage examples
 
 ```js
 const FirebaseServer = require('firebase-server');
+const rules = require('./rules.json');
+const data = require('./data.json');
+const fb = new FirebaseServer(5555, 'localhost', data);
+fb.setAuthSecret(<<current_signed_in_user_id>>);
+fb.setRules(rules)
+console.log(fb.address(), fb.getPort())
 
-new FirebaseServer(5000, 'localhost', {
-  states: {
-    CA: 'California',
-    AL: 'Alabama',
-    KY: 'Kentucky'
-  }
-});
+
 ```
 
 After running this server, you can create a Firebase client instance that connects to it:
