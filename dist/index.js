@@ -57,7 +57,7 @@ function normalizePath(fullPath) {
 class FirebaseServer {
     constructor(portOrOptions, name = 'mock.firebase.server', data = null) {
         this.name = name;
-        this.clock = Number((new Date().getTime() / 1000).toFixed(0));
+        this.clock = new Date().getTime(); //Number((new Date().getTime() / 1000).toFixed(0));
         // Firebase is more than just a "database" now; the "realtime database" is
         // just one of many services provided by a Firebase "App" container.
         // The Firebase library must be initialized with an App, and that app
@@ -181,15 +181,16 @@ class FirebaseServer {
             send({ d: { r: requestId, b: { s: 'permission_denied', d: 'Permission denied' } }, t: 'd' });
         }
         function replaceServerTimestamp(value, data) {
-            if (_.isEqual(data, firebase.database.ServerValue.TIMESTAMP)) {
-                return value;
-            }
-            else if (_.isObject(data) && typeof data === 'object') {
-                return _.mapValues(data, replaceServerTimestamp.bind(this, value));
-            }
-            else {
-                return data;
-            }
+            console.log('value, data', value, data);
+            console.log('firebase.database.ServerValue.TIMESTAMP', firebase.database.ServerValue.TIMESTAMP);
+            /*	if (_.isEqual(data, firebase.database.ServerValue.TIMESTAMP)) {
+                    return value;
+                } else if (_.isObject(data) && typeof data === 'object') {
+                    return _.mapValues(data, replaceServerTimestamp.bind(this, value));
+                } else {
+                    return data;
+                }*/
+            return data;
         }
         function tryRead(requestId, path) {
             const result = server.targaryen.as(authData()).read(path, server.clock);
@@ -201,8 +202,9 @@ class FirebaseServer {
         }
         function tryPatch(requestId, path, newData, now) {
             console.log(newData, now);
-            const result = server.targaryen.as(authData()).update(path, newData, now);
+            const result = server.targaryen.as(authData()).update(path, newData, server.clock);
             console.log('result', result);
+            // console.log('result',result)
             if (!result.allowed) {
                 permissionDenied(requestId);
                 throw new Error(`Permission denied for client to update at ${path}: ${result.info}`);
@@ -243,8 +245,8 @@ class FirebaseServer {
         function handleUpdate(requestId, normalizedPath, fbRef, newData) {
             const path = normalizedPath.path;
             log(`Client update ${path}`);
-            const now = server.clock || new Date().getTime();
-            newData = replaceServerTimestamp(now, newData);
+            const now = server.clock; // || new Date().getTime();
+            //newData = replaceServerTimestamp(now, newData);
             try {
                 tryPatch(requestId, path, newData, now);
             }

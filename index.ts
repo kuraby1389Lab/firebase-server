@@ -67,7 +67,7 @@ class FirebaseServer {
 	private targaryen;
 	private https;
 	private wss: WebSocketServer;
-	private clock: number | null = Number((new Date().getTime() / 1000).toFixed(0));
+	private clock: number = new Date().getTime(); //Number((new Date().getTime() / 1000).toFixed(0));
 	private tokenValidator;
 	private maxFrameLength;
 
@@ -205,13 +205,16 @@ class FirebaseServer {
 		}
 
 		function replaceServerTimestamp(value: number, data: object | number | string) {
-			if (_.isEqual(data, firebase.database.ServerValue.TIMESTAMP)) {
-				return value;
-			} else if (_.isObject(data) && typeof data === 'object') {
-				return _.mapValues(data, replaceServerTimestamp.bind(this, value));
-			} else {
-				return data;
-			}
+			console.log('value, data', value, data);
+			console.log('firebase.database.ServerValue.TIMESTAMP', firebase.database.ServerValue.TIMESTAMP);
+			/*	if (_.isEqual(data, firebase.database.ServerValue.TIMESTAMP)) {
+					return value;
+				} else if (_.isObject(data) && typeof data === 'object') {
+					return _.mapValues(data, replaceServerTimestamp.bind(this, value));
+				} else {
+					return data;
+				}*/
+			return data;
 		}
 
 		function tryRead(requestId: number, path: string) {
@@ -224,9 +227,10 @@ class FirebaseServer {
 		}
 
 		function tryPatch(requestId: number, path: string, newData: object | string | number, now: number) {
-			console.log(newData, now)
-			const result = server.targaryen.as(authData()).update(path, newData, now);
+			console.log(newData, now);
+			const result = server.targaryen.as(authData()).update(path, newData, server.clock);
 			console.log('result',result)
+			// console.log('result',result)
 			if (!result.allowed) {
 				permissionDenied(requestId);
 				throw new Error(`Permission denied for client to update at ${path}: ${result.info}`);
@@ -277,9 +281,8 @@ class FirebaseServer {
 			const path = normalizedPath.path;
 			log(`Client update ${path}`);
 
-			const now = server.clock || new Date().getTime();
-			newData = replaceServerTimestamp(now, newData);
-
+			const now = server.clock; // || new Date().getTime();
+			//newData = replaceServerTimestamp(now, newData);
 			try {
 				tryPatch(requestId, path, newData, now);
 			} catch (e) {
@@ -468,7 +471,7 @@ class FirebaseServer {
 		});
 	}
 
-	public setTime(newTime: number | null) {
+	public setTime(newTime: number) {
 		this.clock = newTime;
 	}
 

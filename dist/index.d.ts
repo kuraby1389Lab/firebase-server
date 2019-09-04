@@ -27,7 +27,7 @@ declare class FirebaseServer {
     address(): string | AddressInfo;
     getPort(): number;
     close(callback?: (err?: Error) => void): Promise<void>;
-    setTime(newTime: number | null): void;
+    setTime(newTime: number): void;
     setAuthSecret(newSecret: string): void;
 }
 export = FirebaseServer;
