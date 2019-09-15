@@ -67,7 +67,7 @@ class FirebaseServer {
 	private targaryen;
 	private https;
 	private wss: WebSocketServer;
-	private clock: number = new Date().getTime(); //Number((new Date().getTime() / 1000).toFixed(0));
+	private clock: number = new Date().getTime(); // Number((new Date().getTime() / 1000).toFixed(0));
 	private tokenValidator;
 	private maxFrameLength;
 
@@ -228,8 +228,8 @@ class FirebaseServer {
 
 		function tryPatch(requestId: number, path: string, newData: object | string | number, now: number) {
 			console.log(newData, now);
-			const result = server.targaryen.as(authData()).update(path, newData, server.clock);
-			console.log('result',result)
+			const result = server.targaryen.as(authData()).update(path, newData, now);
+			// console.log('result',result)
 			// console.log('result',result)
 			if (!result.allowed) {
 				permissionDenied(requestId);
@@ -393,7 +393,7 @@ class FirebaseServer {
 			}
 
 			const parsed = accumulateFrames(data.toString());
-
+			console.log(parsed)
 			if (parsed && parsed.t === 'd') {
 				let path;
 				if (typeof parsed.d.b.p !== 'undefined') {

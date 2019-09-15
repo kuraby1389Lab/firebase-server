@@ -57,7 +57,7 @@ function normalizePath(fullPath) {
 class FirebaseServer {
     constructor(portOrOptions, name = 'mock.firebase.server', data = null) {
         this.name = name;
-        this.clock = new Date().getTime(); //Number((new Date().getTime() / 1000).toFixed(0));
+        this.clock = new Date().getTime(); // Number((new Date().getTime() / 1000).toFixed(0));
         // Firebase is more than just a "database" now; the "realtime database" is
         // just one of many services provided by a Firebase "App" container.
         // The Firebase library must be initialized with an App, and that app
@@ -202,8 +202,8 @@ class FirebaseServer {
         }
         function tryPatch(requestId, path, newData, now) {
             console.log(newData, now);
-            const result = server.targaryen.as(authData()).update(path, newData, server.clock);
-            console.log('result', result);
+            const result = server.targaryen.as(authData()).update(path, newData, now);
+            // console.log('result',result)
             // console.log('result',result)
             if (!result.allowed) {
                 permissionDenied(requestId);
@@ -340,6 +340,7 @@ class FirebaseServer {
                 return;
             }
             const parsed = accumulateFrames(data.toString());
+            console.log(parsed);
             if (parsed && parsed.t === 'd') {
                 let path;
                 if (typeof parsed.d.b.p !== 'undefined') {
