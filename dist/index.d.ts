@@ -1,5 +1,3 @@
-/// <reference types="ws" />
-/// <reference types="node" />
 import * as firebase from 'firebase';
 import { AddressInfo } from 'net';
 import * as WebSocket from 'ws';
